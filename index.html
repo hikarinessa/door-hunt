@@ -123,7 +123,7 @@
   .choice.locked{pointer-events:none; opacity:.85;}
 
   .btn-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; align-items:center;}
-  .btn{font:600 14px/1 'Fredoka'; padding:12px 20px; border-radius:10px; border:1.5px solid transparent; cursor:pointer; transition:all .15s ease;}
+  .btn{font:600 14px/1 system-ui,-apple-system,sans-serif; padding:12px 20px; border-radius:10px; border:1.5px solid transparent; cursor:pointer; transition:all .15s ease;}
   .btn-primary{background:var(--coral); color:#fff; box-shadow:0 4px 12px rgba(214,95,56,.35);}
   .btn-primary:hover{background:var(--coral-d);}
   .btn-ghost{background:transparent; color:var(--ink2); border-color:rgba(201,137,47,.6);}
@@ -255,10 +255,9 @@ function renderLanding(){
       <img class="stamp" src="Door_Stamp.svg" alt="DoOR seal">
       <div class="dept">Department of Orderly Reincarnation</div>
       <h1>The <span class="d">DoOR</span></h1>
-      <div class="sub">A reincarnation in nine stations.</div>
       <div class="motto">Mors non finis · death is not the end</div>
       <div class="blurb">
-        <p>A treasure hunt, walked from your chair. Read each document, flip it over, work out where to go next. Stuck? Reveal the answer and keep walking.</p>
+        <p>A treasure hunt designed for Kiez Burn 2026</p>
       </div>
       <button class="btn btn-primary" style="font-size:16px;padding:14px 30px" onclick="go(0)">Begin Processing ▸</button>
     </div>`;
