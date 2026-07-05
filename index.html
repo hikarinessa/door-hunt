@@ -447,7 +447,8 @@ const STATIONS = [
     part: 2,
     title: "The Bottles Speak",
     intro: [],
-    pdf: "th_09b.mp4"
+    pdf: "th_09b.mp4",
+    clue: "morse.png"
   },
 
   {
@@ -471,7 +472,7 @@ const STATIONS = [
     n: 10,
     title: "One Last Note",
     intro: ["You go through the Rabbithole at Cafe Wonderland and, under one of the benches, there's a chest! You open it to find one last note:"],
-    pdf: "th_10.pdf",
+    pdf: ["finalbox.jpeg", "th_10.pdf"],
     after: "Next to it there's a stack of empty postcards, and a bunch of pens. Would you like to leave a message for yourself?",
     postcard: true
   }
@@ -523,6 +524,9 @@ function renderStation(i){
   const introHTML = s.intro.map(p=>`<p>${p}</p>`).join('');
   const clerkHTML = s.clerk ? `<div class="clerk">${s.clerk}</div>` : '';
 
+  const clueBody = c => /\.(png|jpe?g|webp|gif)$/i.test(c)
+    ? `<img src="${c}" alt="clue" style="max-width:100%; border-radius:8px; margin-top:6px">` : c;
+
   let puzzleHTML = '';
   if(s.puzzle){
     let puzzleInput = '';
@@ -553,7 +557,7 @@ function renderStation(i){
           <button class="btn btn-ghost" onclick="revealAnswer()">Reveal answer</button>
           <span class="feedback" id="feedback"></span>
         </div>
-        ${s.puzzle.clue ? `<p class="clue-text" id="clueText" style="display:none">${s.puzzle.clue}</p>`:''}
+        ${s.puzzle.clue ? `<div class="clue-text" id="clueText" style="display:none">${clueBody(s.puzzle.clue)}</div>`:''}
         <div class="reveal" id="reveal">
           <div class="rk">The way onward</div>
           <div class="ans">${s.puzzle.reveal.answer}</div>
@@ -612,6 +616,12 @@ function renderStation(i){
 
       ${s.branch ? `<div class="puzzle"><div class="choices">` + s.branch.map((b,bi)=>`
         <div class="choice" data-b="${bi}" onclick="pickBranch(${bi})"><span class="mark">${String.fromCharCode(65+bi)}</span><span>${b.label}</span></div>`).join('') + `</div></div>`:''}
+
+      ${(!s.puzzle && s.clue) ? `
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="clueBtn" onclick="showClue()">Clue</button>
+      </div>
+      <div class="clue-text" id="clueText" style="display:none">${clueBody(s.clue)}</div>`:''}
 
       ${puzzleHTML}
 
@@ -823,7 +833,7 @@ window.leavePostcard = async function(){
   }
   t.disabled = true; e.disabled = true;
   document.getElementById('pcBtn').disabled = true;
-  fb.className='feedback ok'; fb.textContent='You tuck it into the box with your future address. R. will do what he can.';
+  fb.className='feedback ok'; fb.textContent='You tuck it into the box with your future address. Remy will do what he can.';
 };
 window.mapPick = function(di){
   if(solvedFlag) return;
