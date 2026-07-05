@@ -496,6 +496,7 @@ const pdfCache = {};
 /* Solved-station cache — lets people wander back and forth (and reload)
    without re-entering solutions. Cleared by "Walk it again". */
 const SOLVED_KEY = 'door-hunt-solved';
+const POS_KEY = 'door-hunt-pos';
 let solvedSet;
 try{ solvedSet = new Set(JSON.parse(localStorage.getItem(SOLVED_KEY) || '[]')); }
 catch(e){ solvedSet = new Set(); }
@@ -503,9 +504,13 @@ function rememberSolved(){
   solvedSet.add(idx);
   try{ localStorage.setItem(SOLVED_KEY, JSON.stringify([...solvedSet])); }catch(e){}
 }
+function savedPos(){
+  try{ const p = parseInt(localStorage.getItem(POS_KEY), 10); return (p>=0 && p<TOTAL) ? p : -1; }
+  catch(e){ return -1; }
+}
 window.resetProgress = function(){
   solvedSet.clear();
-  try{ localStorage.removeItem(SOLVED_KEY); }catch(e){}
+  try{ localStorage.removeItem(SOLVED_KEY); localStorage.removeItem(POS_KEY); }catch(e){}
   go(0);
 };
 
@@ -528,7 +533,10 @@ function renderLanding(){
       <div class="blurb">
         <p>A treasure hunt designed for Kiez Burn 2026</p>
       </div>
-      <button class="btn btn-primary" style="font-size:16px;padding:14px 30px" onclick="go(0)">Start at the Mushroom by the Spa ▸</button>
+      <div class="btn-row" style="justify-content:center">
+        <button class="btn btn-primary" style="font-size:16px;padding:14px 30px" onclick="resetProgress()">Start at the Mushroom by the Spa ▸</button>
+        ${(savedPos()>0 || solvedSet.size>0) ? `<button class="btn btn-primary pulse" style="font-size:16px;padding:14px 30px" onclick="go(${Math.max(savedPos(),0)})">Continue where you left off ▸</button>`:''}
+      </div>
       <div class="credits">Brought to you by Indrek, Luz and Oud<br>compliments from the Romanesco Realm</div>
     </div>`;
 }
@@ -912,6 +920,7 @@ function renderEnding(key){
 
 window.go = function(i){
   idx = i;
+  if(i>=0 && i<TOTAL){ try{ localStorage.setItem(POS_KEY, i); }catch(e){} }
   if(idx < 0) renderLanding();
   else if(idx >= TOTAL) renderDone();
   else renderStation(idx);
