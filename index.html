@@ -787,7 +787,11 @@ window.revealAnswer = function(){
 /* Postbox backend — a hidden Google Form. Fill in when the form exists:
    action  = https://docs.google.com/forms/d/e/<FORM_ID>/formResponse
    msg/email = the entry.<n> field names from the form. Empty action = local-only. */
-const POSTBOX = { action: "", msg: "", email: "" };
+const POSTBOX = {
+  action: "https://docs.google.com/forms/d/e/1FAIpQLSfAp_EgcUHHwNjXm-Um7OdPCFMlGWyHKy6_nrtMwHvqMaYPag/formResponse",
+  msg: "entry.735133350",
+  email: "entry.338533775"
+};
 
 window.leavePostcard = async function(){
   const t = document.getElementById('pcText');
