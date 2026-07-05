@@ -347,8 +347,35 @@ const STATIONS = [
     n: 7,
     title: "The Connection Memorandum",
     intro: [],
-    pdf: "th_07.pdf",
+    pdf: "th_07a.pdf",
     after: "You send a note to someone at the burn using the post system. (I encourage you to drop them a DM on Discord — this is a good opportunity to say the thing you didn't dare at the time.) Shortly after, something gets delivered to you by Hermes' messengers…"
+  },
+
+  {
+    n: 7,
+    part: 2,
+    title: "Delivered by Hermes",
+    intro: [],
+    pdf: "th_07b.png",
+    after: "You head back to the mushroom to check out the DoOR flyer…"
+  },
+
+  {
+    n: 7,
+    part: 3,
+    title: "Back at the Mushroom",
+    intro: [],
+    pdf: "th_01.pdf",
+    puzzle: {
+      type: "text",
+      q: "Which art piece do you visit?",
+      answer: ["WALL OF SUFFERING", "THE WALL OF SUFFERING"],
+      placeholder: "name the art piece",
+      reveal: {
+        answer: "WALL OF SUFFERING",
+        body: ["The delivery and the flyer point the same way — to the Wall of Suffering."]
+      }
+    }
   }
 ];
 
