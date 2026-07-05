@@ -104,6 +104,13 @@
   .artifact-note{font:italic 400 12.5px/1.45 'Bitter'; color:var(--ink2); margin:10px auto 0; max-width:460px; text-align:center;}
   .clue-text{font:italic 400 13.5px/1.5 'Bitter',serif; color:var(--ink2); margin:10px 0 0;}
 
+  /* ---------- map hotspots ---------- */
+  .map-wrap{position:relative; margin:20px 0 6px;}
+  .map-wrap img{display:block; width:100%; height:auto; border-radius:10px;}
+  .map-dot{position:absolute; transform:translate(-50%,-50%); width:6%; aspect-ratio:1/1; border-radius:50%;
+    background:transparent; border:2px solid transparent; cursor:pointer; padding:0;}
+  .map-dot:hover{border-color:rgba(214,95,56,.85); box-shadow:0 0 0 4px rgba(214,95,56,.18);}
+
   /* ---------- puzzle ---------- */
   .puzzle{margin-top:22px; border-top:1px dashed rgba(201,137,47,.6); padding-top:18px;}
   .puzzle .q{font:600 15px/1.5 'Fredoka'; color:var(--ink); margin:0 0 12px;}
@@ -417,6 +424,23 @@ const STATIONS = [
     title: "The Bottles Speak",
     intro: [],
     pdf: "th_09b.mp4"
+  },
+
+  {
+    n: 9,
+    part: 3,
+    title: "The Map",
+    intro: ["One of the red dots marks where the last part waits. Choose."],
+    map: {
+      src: "map.png",
+      dots: [
+        {x: 66.6, y: 23.0},
+        {x: 42.4, y: 28.6, ok: true},
+        {x: 54.5, y: 48.5},
+        {x: 15.7, y: 58.5},
+        {x: 36.6, y: 70.7}
+      ]
+    }
   }
 ];
 
@@ -463,7 +487,7 @@ function renderLanding(){
 function renderStation(i){
   const s = STATIONS[i];
   solvedFlag = false; selected = -1; multiSel = [];
-  const pdfs = Array.isArray(s.pdf) ? s.pdf : [s.pdf];
+  const pdfs = s.pdf ? (Array.isArray(s.pdf) ? s.pdf : [s.pdf]) : [];
   const introHTML = s.intro.map(p=>`<p>${p}</p>`).join('');
   const clerkHTML = s.clerk ? `<div class="clerk">${s.clerk}</div>` : '';
 
@@ -513,7 +537,7 @@ function renderStation(i){
       <div class="narration">${introHTML}</div>
       ${clerkHTML}
 
-      <div class="artifact-wrap">
+      ${pdfs.length ? `<div class="artifact-wrap">` : '<div style="display:none">'}
         ${pdfs.map((u,k)=> /\.(mp4|mov|webm)$/i.test(u) ? `
         <div class="flipbook">
           <video class="flip-video" src="${u}" controls playsinline preload="metadata"></video>
@@ -534,6 +558,13 @@ function renderStation(i){
         ${s.artifactNote ? `<p class="artifact-note">${s.artifactNote}</p>`:''}
       </div>
 
+      ${s.map ? `
+      <div class="map-wrap">
+        <img src="${s.map.src}" alt="The map">
+        ${s.map.dots.map((d,di)=>`<button class="map-dot" style="left:${d.x}%;top:${d.y}%" onclick="mapPick(${di})"></button>`).join('')}
+      </div>
+      <div class="btn-row"><span class="feedback" id="feedback"></span></div>`:''}
+
       ${s.after ? `<div class="narration" style="margin-top:18px"><p>${s.after}</p></div>`:''}
 
       ${s.branch ? `<div class="puzzle"><div class="choices">` + s.branch.map((b,bi)=>`
@@ -545,7 +576,7 @@ function renderStation(i){
 
       <div class="nav-row">
         <button class="btn btn-ghost" onclick="go(${i-1})">${i===0?'◂ Beginning':'◂ Back'}</button>
-        ${s.branch ? '' : `<button class="btn btn-primary ${s.puzzle?'':'pulse'}" id="nextBtn" onclick="go(${i+1})" ${s.puzzle?'disabled':''}>${i+1>=TOTAL?'Finish ▸':(s.nextLabel||'Next ▸')}</button>`}
+        ${s.branch ? '' : `<button class="btn btn-primary ${(s.puzzle||s.map)?'':'pulse'}" id="nextBtn" onclick="go(${i+1})" ${(s.puzzle||s.map)?'disabled':''}>${i+1>=TOTAL?'Finish ▸':(s.nextLabel||'Next ▸')}</button>`}
       </div>
     </div>`;
 
@@ -725,9 +756,16 @@ window.revealAnswer = function(){
   document.getElementById('feedback').textContent='';
   solve();
 };
+window.mapPick = function(di){
+  if(solvedFlag) return;
+  const d = STATIONS[idx].map.dots[di];
+  const fb = document.getElementById('feedback');
+  if(d.ok){ fb.className='feedback ok'; fb.textContent='That’s the one. The way onward is open.'; solve(); }
+  else { fb.className='feedback no'; fb.textContent='Nothing there but orderly tents. Try another dot.'; }
+};
 function solve(){
   solvedFlag = true;
-  document.getElementById('reveal').classList.add('show');
+  const rv = document.getElementById('reveal'); if(rv) rv.classList.add('show');
   const cb = document.getElementById('checkBtn'); if(cb) cb.disabled = true;
   document.querySelectorAll('.choice').forEach(c=>c.classList.add('locked'));
   const outro = document.getElementById('outro'); if(outro) outro.style.display='block';
