@@ -114,6 +114,9 @@
   @keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-7px);}40%,80%{transform:translateX(7px);}}
 
   .choices{display:flex; flex-direction:column; gap:9px;}
+  .choice-group{margin-top:14px;}
+  .choice-group:first-child{margin-top:0;}
+  .choice-group-label{font:600 10.5px/1 'Fredoka'; letter-spacing:1.2px; text-transform:uppercase; color:var(--ink2); margin-bottom:8px;}
   .choice{display:flex; align-items:flex-start; gap:11px; padding:12px 14px; background:#fffef9; border:1.5px solid rgba(201,137,47,.5);
     border-radius:9px; cursor:pointer; font:400 15px/1.45 'Bitter',serif; color:var(--ink); transition:all .15s ease;}
   .choice:hover{border-color:var(--coral); background:#fff8ee;}
@@ -376,6 +379,26 @@ const STATIONS = [
         body: ["The delivery and the flyer point the same way — to the Wall of Suffering."]
       }
     }
+  },
+
+  {
+    n: 8,
+    title: "The Wall of Suffering",
+    intro: [],
+    pdf: "th_08.png",
+    puzzle: {
+      type: "multi",
+      q: "",
+      parts: [
+        {label: "Where do you go?", options: ["The Living Room", "The Inn Between", "House of Plenty"], correct: 1},
+        {label: "What do you look for?", options: ["Shoes", "Hats", "Bottles"], correct: 2}
+      ],
+      clue: "Ask each letter where it stands in the order of its own people.",
+      reveal: {
+        answer: "The Inn Between · Bottles",
+        body: ["Eight tongues guard the message: each foreign letter's place in its own alphabet is a number, and the numbers spell it out in the common tongue — bottles, at the Inn Between."]
+      }
+    }
   }
 ];
 
@@ -391,6 +414,7 @@ const NSTATIONS = Math.max(...STATIONS.map(s=>s.n));
 let idx = -1;
 let solvedFlag = false;
 let selected = -1;
+let multiSel = [];
 const pdfCache = {};
 
 function norm(s){ return (s||'').toString().toUpperCase().replace(/[^A-Z0-9]/g,''); }
@@ -420,7 +444,7 @@ function renderLanding(){
 
 function renderStation(i){
   const s = STATIONS[i];
-  solvedFlag = false; selected = -1;
+  solvedFlag = false; selected = -1; multiSel = [];
   const pdfs = Array.isArray(s.pdf) ? s.pdf : [s.pdf];
   const introHTML = s.intro.map(p=>`<p>${p}</p>`).join('');
   const clerkHTML = s.clerk ? `<div class="clerk">${s.clerk}</div>` : '';
@@ -433,6 +457,14 @@ function renderStation(i){
         <input class="answer-input" id="ans" placeholder="${s.puzzle.placeholder||'your answer'}" autocomplete="off" spellcheck="false"
                onkeydown="if(event.key==='Enter')checkText()">
         ${s.puzzle.hint ? `<p class="artifact-note" style="margin-top:10px">Clue as shown: <span class="mono">${s.puzzle.hint}</span></p>`:''}`;
+    } else if(s.puzzle.type === 'multi'){
+      puzzleInput = s.puzzle.parts.map((p,gi)=>`
+        <div class="choice-group">
+          <div class="choice-group-label">${p.label}</div>
+          <div class="choices">${p.options.map((o,ci)=>`
+            <div class="choice" data-g="${gi}" data-i="${ci}" onclick="pickMulti(${gi},${ci})"><span class="mark">${String.fromCharCode(65+ci)}</span><span>${o}</span></div>`).join('')}
+          </div>
+        </div>`).join('');
     } else {
       puzzleInput = `<div class="choices" id="choices">` + s.puzzle.options.map((o,ci)=>`
         <div class="choice" data-i="${ci}" onclick="pickChoice(${ci})"><span class="mark">${String.fromCharCode(65+ci)}</span><span>${o}</span></div>`).join('') + `</div>`;
@@ -442,7 +474,7 @@ function renderStation(i){
         ${s.puzzle.q ? `<p class="q">${s.puzzle.q}</p>`:''}
         ${puzzleInput}
         <div class="btn-row">
-          <button class="btn btn-primary" id="checkBtn" onclick="${s.puzzle.type==='text'?'checkText()':'checkChoice()'}">Check answer</button>
+          <button class="btn btn-primary" id="checkBtn" onclick="${s.puzzle.type==='text'?'checkText()':(s.puzzle.type==='multi'?'checkMulti()':'checkChoice()')}">Check answer</button>
           ${s.puzzle.clue ? `<button class="btn btn-ghost" id="clueBtn" onclick="showClue()">Clue</button>`:''}
           <button class="btn btn-ghost" onclick="revealAnswer()">Reveal answer</button>
           <span class="feedback" id="feedback"></span>
@@ -622,6 +654,26 @@ window.checkText = function(){
     inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
   }
 };
+window.pickMulti = function(gi, ci){
+  if(solvedFlag) return;
+  multiSel[gi] = ci;
+  document.querySelectorAll(`.choice[data-g="${gi}"]`).forEach(c=>c.classList.remove('selected','wrong'));
+  document.querySelector(`.choice[data-g="${gi}"][data-i="${ci}"]`).classList.add('selected');
+};
+window.checkMulti = function(){
+  if(solvedFlag) return;
+  const s = STATIONS[idx];
+  const fb = document.getElementById('feedback');
+  if(s.puzzle.parts.some((p,gi)=>multiSel[gi]===undefined)){
+    fb.className='feedback no'; fb.textContent='Choose one of each.'; return;
+  }
+  if(s.puzzle.parts.every((p,gi)=>multiSel[gi]===p.correct)){
+    s.puzzle.parts.forEach((p,gi)=>document.querySelector(`.choice[data-g="${gi}"][data-i="${p.correct}"]`).classList.add('correct'));
+    fb.className='feedback ok'; fb.textContent='Correct.'; solve();
+  } else {
+    fb.className='feedback no'; fb.textContent='Not quite — at least one of those is off. Try again, or reveal the answer.';
+  }
+};
 window.checkChoice = function(){
   if(solvedFlag) return;
   const s = STATIONS[idx];
@@ -641,6 +693,11 @@ window.revealAnswer = function(){
     const choices = document.querySelectorAll('.choice');
     choices.forEach(c=>c.classList.remove('wrong','selected'));
     choices[s.puzzle.correct].classList.add('correct');
+  } else if(s.puzzle.type==='multi'){
+    s.puzzle.parts.forEach((p,gi)=>{
+      document.querySelectorAll(`.choice[data-g="${gi}"]`).forEach(c=>c.classList.remove('wrong','selected'));
+      document.querySelector(`.choice[data-g="${gi}"][data-i="${p.correct}"]`).classList.add('correct');
+    });
   } else {
     document.getElementById('ans').value = s.puzzle.reveal.answer;
   }
