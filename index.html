@@ -86,6 +86,7 @@
   .artifact-wrap{margin:20px 0 6px;}
   .flipbook{position:relative; display:flex; flex-direction:column; align-items:center; gap:12px;}
   .flipbook + .flipbook{margin-top:18px;}
+  .flip-video{max-width:100%; border-radius:8px; background:#000; box-shadow:0 8px 22px rgba(0,0,0,.3);}
   .flip-stage-row{display:flex; align-items:center; gap:12px;}
   .flip-stage{position:relative; background:#e7dcc4; border:1px solid rgba(201,137,47,.5); border-radius:12px; padding:16px; box-shadow:inset 0 2px 10px rgba(62,42,28,.12);}
   .flip-canvas{display:block; background:#fff; box-shadow:0 8px 22px rgba(0,0,0,.3); border-radius:2px; max-width:100%; height:auto; cursor:zoom-in;}
@@ -399,6 +400,23 @@ const STATIONS = [
         body: ["Eight tongues guard the message: each foreign letter's place in its own alphabet is a number, and the numbers spell it out in the common tongue — bottles, at the Inn Between."]
       }
     }
+  },
+
+  {
+    n: 9,
+    title: "Concerning the Oubliette",
+    intro: [],
+    pdf: "th_09a.pdf",
+    after: "You see the bottles, and a button next to them. Let's press it.",
+    nextLabel: "Press it ▸"
+  },
+
+  {
+    n: 9,
+    part: 2,
+    title: "The Bottles Speak",
+    intro: [],
+    pdf: "th_09b.mp4"
   }
 ];
 
@@ -496,7 +514,10 @@ function renderStation(i){
       ${clerkHTML}
 
       <div class="artifact-wrap">
-        ${pdfs.map((_,k)=>`
+        ${pdfs.map((u,k)=> /\.(mp4|mov|webm)$/i.test(u) ? `
+        <div class="flipbook">
+          <video class="flip-video" src="${u}" controls playsinline preload="metadata"></video>
+        </div>` : `
         <div class="flipbook">
           <div class="flip-stage-row">
             <div class="flip-stage" id="flipStage${k}">
@@ -529,7 +550,7 @@ function renderStation(i){
     </div>`;
 
   flips = pdfs.map(()=>null);
-  pdfs.forEach((u,k)=>setupFlipbook(u,k));
+  pdfs.forEach((u,k)=>{ if(!/\.(mp4|mov|webm)$/i.test(u)) setupFlipbook(u,k); });
 }
 
 /* ---------- flipbook (supports several artifacts per station) ---------- */
