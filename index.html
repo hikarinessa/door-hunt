@@ -111,6 +111,14 @@
     background:transparent; border:2px solid transparent; cursor:pointer; padding:0;}
   .map-dot:hover{border-color:rgba(214,95,56,.85); box-shadow:0 0 0 4px rgba(214,95,56,.18);}
 
+  /* ---------- postcard ---------- */
+  .postcard{margin-top:16px;}
+  .postcard textarea{width:100%; resize:vertical; font:400 16px/1.7 'Special Elite',monospace; color:var(--ink);
+    background:#fffef9 repeating-linear-gradient(transparent, transparent 26px, rgba(201,137,47,.25) 27px);
+    border:1.5px solid var(--gold-d); border-radius:9px; padding:12px 14px;}
+  .postcard textarea:focus{outline:none; border-color:var(--coral); box-shadow:0 0 0 3px rgba(214,95,56,.15);}
+  .postcard textarea:disabled{opacity:.7;}
+
   /* ---------- puzzle ---------- */
   .puzzle{margin-top:22px; border-top:1px dashed rgba(201,137,47,.6); padding-top:18px;}
   .puzzle .q{font:600 15px/1.5 'Fredoka'; color:var(--ink); margin:0 0 12px;}
@@ -441,6 +449,15 @@ const STATIONS = [
         {x: 36.6, y: 70.7}
       ]
     }
+  },
+
+  {
+    n: 10,
+    title: "One Last Note",
+    intro: ["You go through the Rabbithole at Cafe Wonderland and, under one of the benches, there's a chest! You open it to find one last note:"],
+    pdf: "th_10.pdf",
+    after: "Next to it there's a stack of empty postcards, and a bunch of pens. Would you like to leave a message for yourself?",
+    postcard: true
   }
 ];
 
@@ -566,6 +583,17 @@ function renderStation(i){
       <div class="btn-row"><span class="feedback" id="feedback"></span></div>`:''}
 
       ${s.after ? `<div class="narration" style="margin-top:18px"><p>${s.after}</p></div>`:''}
+
+      ${s.postcard ? `
+      <div class="postcard">
+        <textarea id="pcText" rows="5" placeholder="a real memory, a small one…" spellcheck="false"></textarea>
+        <input class="answer-input" id="pcEmail" type="email" style="margin-top:10px; text-transform:none; letter-spacing:normal; text-align:left; font-size:15px"
+               placeholder="your future address (email)" autocomplete="email" spellcheck="false">
+        <div class="btn-row">
+          <button class="btn btn-primary" id="pcBtn" onclick="leavePostcard()">Leave it in the box</button>
+          <span class="feedback" id="pcFb"></span>
+        </div>
+      </div>`:''}
 
       ${s.branch ? `<div class="puzzle"><div class="choices">` + s.branch.map((b,bi)=>`
         <div class="choice" onclick="branchGo(${bi})"><span class="mark">${String.fromCharCode(65+bi)}</span><span>${b.label}</span></div>`).join('') + `</div></div>`:''}
@@ -755,6 +783,27 @@ window.revealAnswer = function(){
   }
   document.getElementById('feedback').textContent='';
   solve();
+};
+/* Postbox backend — a hidden Google Form. Fill in when the form exists:
+   action  = https://docs.google.com/forms/d/e/<FORM_ID>/formResponse
+   msg/email = the entry.<n> field names from the form. Empty action = local-only. */
+const POSTBOX = { action: "", msg: "", email: "" };
+
+window.leavePostcard = async function(){
+  const t = document.getElementById('pcText');
+  const e = document.getElementById('pcEmail');
+  const fb = document.getElementById('pcFb');
+  if(!t.value.trim()){ fb.className='feedback no'; fb.textContent='The pen waits. Something small and true.'; return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.value.trim())){ fb.className='feedback no'; fb.textContent='The Department needs a future address — a working email.'; return; }
+  if(POSTBOX.action){
+    const fd = new FormData();
+    fd.append(POSTBOX.msg, t.value.trim());
+    fd.append(POSTBOX.email, e.value.trim());
+    try{ await fetch(POSTBOX.action, {method:'POST', mode:'no-cors', body:fd}); }catch(err){}
+  }
+  t.disabled = true; e.disabled = true;
+  document.getElementById('pcBtn').disabled = true;
+  fb.className='feedback ok'; fb.textContent='You tuck it into the box with your future address. R. will do what he can.';
 };
 window.mapPick = function(di){
   if(solvedFlag) return;
