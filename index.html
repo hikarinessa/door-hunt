@@ -203,7 +203,7 @@ const STATIONS = [
     pdf: "th_01.pdf",
     puzzle: {
       type: "text",
-      q: "Flip the leaflet over and decode the message on the back — type where you're headed.",
+      q: "",
       clue: "Look at the numeric keyboard of your phone.",
       answer: ["HALLWAY OF MIRRORS"],
       placeholder: "type the next location",
@@ -266,6 +266,32 @@ const STATIONS = [
         body: ["The grid is 26 columns wide — one per letter of the alphabet. Each dotted row is a letter (A in the first column, Z in the last); read top to bottom and it spells the destination."]
       }
     }
+  },
+
+  {
+    n: 4,
+    title: "The Oubliette Notice",
+    intro: [],
+    pdf: "th_04a.pdf",
+    after: "You look around you and find a special torch. It shines UV light, and you point it to a suspicious yellow panel next to this text."
+  },
+
+  {
+    n: 4,
+    part: 2,
+    title: "Under the UV Light",
+    intro: [],
+    pdf: "th_04b.jpg",
+    puzzle: {
+      type: "text",
+      q: "The panel answers in yellow. Where are you headed?",
+      answer: ["FREE CAMPING", "FREECAMP"],
+      placeholder: "type the next location",
+      reveal: {
+        answer: "FREE CAMPING",
+        body: ["The UV drawing points you to the Free Camping."]
+      }
+    }
   }
 ];
 
@@ -314,15 +340,35 @@ function renderStation(i){
   const introHTML = s.intro.map(p=>`<p>${p}</p>`).join('');
   const clerkHTML = s.clerk ? `<div class="clerk">${s.clerk}</div>` : '';
 
-  let puzzleInput = '';
-  if(s.puzzle.type === 'text'){
-    puzzleInput = `
-      <input class="answer-input" id="ans" placeholder="${s.puzzle.placeholder||'your answer'}" autocomplete="off" spellcheck="false"
-             onkeydown="if(event.key==='Enter')checkText()">
-      ${s.puzzle.hint ? `<p class="artifact-note" style="margin-top:10px">Clue as shown: <span class="mono">${s.puzzle.hint}</span></p>`:''}`;
-  } else {
-    puzzleInput = `<div class="choices" id="choices">` + s.puzzle.options.map((o,ci)=>`
-      <div class="choice" data-i="${ci}" onclick="pickChoice(${ci})"><span class="mark">${String.fromCharCode(65+ci)}</span><span>${o}</span></div>`).join('') + `</div>`;
+  let puzzleHTML = '';
+  if(s.puzzle){
+    let puzzleInput = '';
+    if(s.puzzle.type === 'text'){
+      puzzleInput = `
+        <input class="answer-input" id="ans" placeholder="${s.puzzle.placeholder||'your answer'}" autocomplete="off" spellcheck="false"
+               onkeydown="if(event.key==='Enter')checkText()">
+        ${s.puzzle.hint ? `<p class="artifact-note" style="margin-top:10px">Clue as shown: <span class="mono">${s.puzzle.hint}</span></p>`:''}`;
+    } else {
+      puzzleInput = `<div class="choices" id="choices">` + s.puzzle.options.map((o,ci)=>`
+        <div class="choice" data-i="${ci}" onclick="pickChoice(${ci})"><span class="mark">${String.fromCharCode(65+ci)}</span><span>${o}</span></div>`).join('') + `</div>`;
+    }
+    puzzleHTML = `
+      <div class="puzzle">
+        ${s.puzzle.q ? `<p class="q">${s.puzzle.q}</p>`:''}
+        ${puzzleInput}
+        <div class="btn-row">
+          <button class="btn btn-primary" id="checkBtn" onclick="${s.puzzle.type==='text'?'checkText()':'checkChoice()'}">Check answer</button>
+          ${s.puzzle.clue ? `<button class="btn btn-ghost" id="clueBtn" onclick="showClue()">Clue</button>`:''}
+          <button class="btn btn-ghost" onclick="revealAnswer()">Reveal answer</button>
+          <span class="feedback" id="feedback"></span>
+        </div>
+        ${s.puzzle.clue ? `<p class="clue-text" id="clueText" style="display:none">${s.puzzle.clue}</p>`:''}
+        <div class="reveal" id="reveal">
+          <div class="rk">The way onward</div>
+          <div class="ans">${s.puzzle.reveal.answer}</div>
+          ${s.puzzle.reveal.body.map(p=>`<p>${p}</p>`).join('')}
+        </div>
+      </div>`;
   }
 
   app.innerHTML = `
@@ -349,28 +395,15 @@ function renderStation(i){
         ${s.artifactNote ? `<p class="artifact-note">${s.artifactNote}</p>`:''}
       </div>
 
-      <div class="puzzle">
-        <p class="q">${s.puzzle.q}</p>
-        ${puzzleInput}
-        <div class="btn-row">
-          <button class="btn btn-primary" id="checkBtn" onclick="${s.puzzle.type==='text'?'checkText()':'checkChoice()'}">Check answer</button>
-          ${s.puzzle.clue ? `<button class="btn btn-ghost" id="clueBtn" onclick="showClue()">Clue</button>`:''}
-          <button class="btn btn-ghost" onclick="revealAnswer()">Reveal answer</button>
-          <span class="feedback" id="feedback"></span>
-        </div>
-        ${s.puzzle.clue ? `<p class="clue-text" id="clueText" style="display:none">${s.puzzle.clue}</p>`:''}
-        <div class="reveal" id="reveal">
-          <div class="rk">The way onward</div>
-          <div class="ans">${s.puzzle.reveal.answer}</div>
-          ${s.puzzle.reveal.body.map(p=>`<p>${p}</p>`).join('')}
-        </div>
-      </div>
+      ${s.after ? `<div class="narration" style="margin-top:18px"><p>${s.after}</p></div>`:''}
+
+      ${puzzleHTML}
 
       ${s.outro ? `<div class="narration" id="outro" style="margin-top:16px;color:var(--ink2);font-style:italic;display:none">${s.outro}</div>`:''}
 
       <div class="nav-row">
         <button class="btn btn-ghost" onclick="go(${i-1})">${i===0?'◂ Beginning':'◂ Back'}</button>
-        <button class="btn btn-primary" id="nextBtn" onclick="go(${i+1})" disabled>${i+1>=TOTAL?'Finish ▸':'Next station ▸'}</button>
+        <button class="btn btn-primary ${s.puzzle?'':'pulse'}" id="nextBtn" onclick="go(${i+1})" ${s.puzzle?'disabled':''}>${i+1>=TOTAL?'Finish ▸':'Next ▸'}</button>
       </div>
     </div>`;
 
@@ -380,18 +413,30 @@ function renderStation(i){
 /* ---------- flipbook ---------- */
 let flip = { doc:null, page:1, pages:1, rendering:false };
 async function setupFlipbook(url){
-  flip = { doc:null, page:1, pages:1, rendering:false };
+  flip = { doc:null, img:null, page:1, pages:1, rendering:false };
   const loading = document.getElementById('flipLoading');
   try{
-    if(!window.pdfjsLib) throw new Error('pdf.js unavailable');
-    let doc = pdfCache[url];
-    if(!doc){ doc = await pdfjsLib.getDocument(url).promise; pdfCache[url]=doc; }
-    flip.doc = doc; flip.pages = doc.numPages; flip.page = 1;
+    if(/\.(jpe?g|png|webp|gif)$/i.test(url)){
+      let img = pdfCache[url];
+      if(!img){
+        img = new Image();
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error('image failed')); img.src=url; });
+        pdfCache[url] = img;
+      }
+      flip.img = img;
+    } else {
+      if(!window.pdfjsLib) throw new Error('pdf.js unavailable');
+      let doc = pdfCache[url];
+      if(!doc){ doc = await pdfjsLib.getDocument(url).promise; pdfCache[url]=doc; }
+      flip.doc = doc; flip.pages = doc.numPages; flip.page = 1;
+    }
     document.getElementById('flipCanvas').style.display='block';
-    if(flip.pages > 1){ document.getElementById('flipArrow').style.display='flex'; }
-    const meta = document.getElementById('flipMeta'); meta.style.display='flex';
-    const dots = document.getElementById('flipDots');
-    dots.innerHTML = Array.from({length:flip.pages},(_,k)=>`<span class="dot ${k===0?'on':''}"></span>`).join('');
+    if(flip.pages > 1){
+      document.getElementById('flipArrow').style.display='flex';
+      document.getElementById('flipMeta').style.display='flex';
+      const dots = document.getElementById('flipDots');
+      dots.innerHTML = Array.from({length:flip.pages},(_,k)=>`<span class="dot ${k===0?'on':''}"></span>`).join('');
+    }
     await renderFlip();
     loading.style.display='none';
   }catch(e){
@@ -399,23 +444,34 @@ async function setupFlipbook(url){
   }
 }
 async function renderFlip(){
-  if(!flip.doc || flip.rendering) return;
+  if((!flip.doc && !flip.img) || flip.rendering) return;
   flip.rendering = true;
-  const page = await flip.doc.getPage(flip.page);
   const canvas = document.getElementById('flipCanvas');
   if(!canvas){ flip.rendering=false; return; }
   const stageW = Math.min(360, (document.querySelector('.flip-stage').clientWidth||360) - 32);
-  const base = page.getViewport({scale:1});
   const maxH = 600;
-  let scale = stageW / base.width;
-  if(base.height*scale > maxH) scale = maxH / base.height;
   const dpr = window.devicePixelRatio || 1;
-  const vp = page.getViewport({scale: scale*dpr});
-  canvas.width = vp.width; canvas.height = vp.height;
-  canvas.style.width = (vp.width/dpr)+'px'; canvas.style.height = (vp.height/dpr)+'px';
-  await page.render({canvasContext:canvas.getContext('2d'), viewport:vp}).promise;
-  const lbl = document.getElementById('flipSideLabel'); if(lbl) lbl.textContent = `Side ${flip.page} of ${flip.pages}`;
-  document.querySelectorAll('#flipDots .dot').forEach((d,k)=>d.classList.toggle('on', k===flip.page-1));
+  if(flip.img){
+    const w = flip.img.naturalWidth, h = flip.img.naturalHeight;
+    let scale = stageW / w;
+    if(h*scale > maxH) scale = maxH / h;
+    canvas.width = Math.round(w*scale*dpr); canvas.height = Math.round(h*scale*dpr);
+    canvas.style.width = Math.round(w*scale)+'px'; canvas.style.height = Math.round(h*scale)+'px';
+    canvas.getContext('2d').drawImage(flip.img, 0, 0, canvas.width, canvas.height);
+  } else {
+    const page = await flip.doc.getPage(flip.page);
+    const base = page.getViewport({scale:1});
+    let scale = stageW / base.width;
+    if(base.height*scale > maxH) scale = maxH / base.height;
+    const vp = page.getViewport({scale: scale*dpr});
+    canvas.width = vp.width; canvas.height = vp.height;
+    canvas.style.width = (vp.width/dpr)+'px'; canvas.style.height = (vp.height/dpr)+'px';
+    await page.render({canvasContext:canvas.getContext('2d'), viewport:vp}).promise;
+    if(flip.pages > 1){
+      const lbl = document.getElementById('flipSideLabel'); if(lbl) lbl.textContent = `Side ${flip.page} of ${flip.pages}`;
+      document.querySelectorAll('#flipDots .dot').forEach((d,k)=>d.classList.toggle('on', k===flip.page-1));
+    }
+  }
   flip.rendering = false;
 }
 window.flipPage = function(){
@@ -426,18 +482,26 @@ window.flipPage = function(){
 
 /* ---------- lightbox ---------- */
 window.openLightbox = async function(){
-  if(!flip.doc) return;
+  if(!flip.doc && !flip.img) return;
   const lb = document.getElementById('lightbox');
   lb.style.display='flex';
-  const page = await flip.doc.getPage(flip.page);
-  const base = page.getViewport({scale:1});
   const availW = window.innerWidth-48, availH = window.innerHeight-48;
   const dpr = window.devicePixelRatio || 1;
-  const vp = page.getViewport({scale: Math.min(availW/base.width, availH/base.height)*dpr});
   const c = document.getElementById('lightboxCanvas');
-  c.width = vp.width; c.height = vp.height;
-  c.style.width = (vp.width/dpr)+'px'; c.style.height = (vp.height/dpr)+'px';
-  await page.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+  if(flip.img){
+    const w = flip.img.naturalWidth, h = flip.img.naturalHeight;
+    const scale = Math.min(availW/w, availH/h, 1.5);
+    c.width = Math.round(w*scale*dpr); c.height = Math.round(h*scale*dpr);
+    c.style.width = Math.round(w*scale)+'px'; c.style.height = Math.round(h*scale)+'px';
+    c.getContext('2d').drawImage(flip.img, 0, 0, c.width, c.height);
+  } else {
+    const page = await flip.doc.getPage(flip.page);
+    const base = page.getViewport({scale:1});
+    const vp = page.getViewport({scale: Math.min(availW/base.width, availH/base.height)*dpr});
+    c.width = vp.width; c.height = vp.height;
+    c.style.width = (vp.width/dpr)+'px'; c.style.height = (vp.height/dpr)+'px';
+    await page.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+  }
 };
 window.closeLightbox = function(){ document.getElementById('lightbox').style.display='none'; };
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLightbox(); });
