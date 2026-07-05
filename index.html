@@ -299,7 +299,17 @@ const STATIONS = [
     n: 5,
     title: "On DoORs Business",
     intro: ["You walk around the freecamping perimeter and find a walled section with a warning — <em>No Entry</em>, and in small text: <em>except on DoORs business</em>. You walk in to find…"],
-    pdf: ["th_05a.pdf", "th_05b.png"]
+    pdf: ["th_05a.pdf", "th_05b.png"],
+    puzzle: {
+      type: "choice",
+      q: "",
+      options: ["Go to the Romanesco Realm", "Go to the Cathedral of Crucifera", "Go to the Temple", "Go to the U-Bahn"],
+      correct: 1,
+      reveal: {
+        answer: "The Cathedral of Crucifera",
+        body: ["Let your eyes unfocus on the pattern and the hidden shape rises out of it — the fractal spire of a romanesco. The Cathedral of Crucifera."]
+      }
+    }
   }
 ];
 
