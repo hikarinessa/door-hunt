@@ -611,8 +611,7 @@ function renderStation(i){
       </div>`:''}
 
       ${s.branch ? `<div class="puzzle"><div class="choices">` + s.branch.map((b,bi)=>`
-        <div class="choice" data-b="${bi}" onclick="pickBranch(${bi})"><span class="mark">${String.fromCharCode(65+bi)}</span><span>${b.label}</span></div>`).join('') + `</div>
-        <div class="btn-row"><button class="btn btn-primary" id="branchBtn" onclick="branchGo()" disabled>Next ▸</button></div></div>`:''}
+        <div class="choice" data-b="${bi}" onclick="pickBranch(${bi})"><span class="mark">${String.fromCharCode(65+bi)}</span><span>${b.label}</span></div>`).join('') + `</div></div>`:''}
 
       ${puzzleHTML}
 
@@ -620,7 +619,8 @@ function renderStation(i){
 
       <div class="nav-row">
         <button class="btn btn-ghost" onclick="go(${i-1})">${i===0?'◂ Beginning':'◂ Back'}</button>
-        ${s.branch ? '' : `<button class="btn btn-primary ${(s.puzzle||s.map)?'':'pulse'}" id="nextBtn" onclick="go(${i+1})" ${(s.puzzle||s.map)?'disabled':''}>${i+1>=TOTAL?'Finish ▸':(s.nextLabel||'Next ▸')}</button>`}
+        ${s.branch ? `<button class="btn btn-primary" id="branchBtn" onclick="branchGo()" disabled>Next ▸</button>`
+                   : `<button class="btn btn-primary ${(s.puzzle||s.map)?'':'pulse'}" id="nextBtn" onclick="go(${i+1})" ${(s.puzzle||s.map)?'disabled':''}>${i+1>=TOTAL?'Finish ▸':(s.nextLabel||'Next ▸')}</button>`}
       </div>
     </div>`;
 
