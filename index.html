@@ -17,7 +17,7 @@
   Each station is one object:
 
     {
-      n: 1,
+      n: 1,                                      // station number (repeat it + add part:2 for a two-artifact station)
       title: "The Welcome Leaflet",
       intro: [ "paragraph", "paragraph" ],     // narration before the artifact
       clerk: "optional blue-ink margin note from the rogue Records clerk",
@@ -27,6 +27,7 @@
         type: "text",                            // "text"  or  "choice"
         q: "what the player must do",
         hint: "optional clue string shown under the input",
+        clue: "optional hint hidden behind a 'Clue' button",
         answer: ["HALLWAY OF MIRRORS"],          // text: accepted answers (case/space-insensitive)
         placeholder: "type the next location",
         // for type:"choice" instead use:  options:[...], correct: <0-based index>
@@ -60,7 +61,7 @@
   .mono{font-family:'Special Elite',monospace;}
   .wrap{max-width:760px; margin:0 auto; padding:28px 20px 80px;}
 
-  .topbar{display:flex; align-items:center; gap:12px; padding:10px 0 16px; border-bottom:1px solid rgba(201,137,47,.4);}
+  .topbar{display:flex; align-items:center; gap:12px; padding:10px 0 16px; border-bottom:1px solid rgba(201,137,47,.4); cursor:pointer;}
   .topbar img{width:34px; height:34px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));}
   .topbar .dept{font:600 12px/1.2 'Cormorant Garamond',serif; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold-d);}
   .topbar .motto{margin-left:auto; font:italic 500 13px/1 'Cormorant Garamond',serif; color:var(--ink2);}
@@ -83,13 +84,12 @@
 
   /* ---------- flipbook ---------- */
   .artifact-wrap{margin:20px 0 6px;}
-  .artifact-label{font:600 10.5px/1 'Fredoka'; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink2); margin-bottom:10px; display:flex; align-items:center; gap:8px;}
-  .artifact-label::before{content:""; width:16px; height:1px; background:var(--gold-d);}
   .flipbook{position:relative; display:flex; flex-direction:column; align-items:center; gap:12px;}
+  .flip-stage-row{display:flex; align-items:center; gap:12px;}
   .flip-stage{position:relative; background:#e7dcc4; border:1px solid rgba(201,137,47,.5); border-radius:12px; padding:16px; box-shadow:inset 0 2px 10px rgba(62,42,28,.12);}
   .flip-canvas{display:block; background:#fff; box-shadow:0 8px 22px rgba(0,0,0,.3); border-radius:2px; max-width:100%; height:auto;}
   .flip-loading{font:italic 400 13px/1.5 'Bitter'; color:var(--ink2); padding:60px 30px; text-align:center;}
-  .flip-arrow{position:absolute; bottom:14px; right:14px; width:46px; height:46px; border-radius:50%;
+  .flip-arrow{flex:0 0 auto; width:46px; height:46px; border-radius:50%;
     background:var(--coral); color:#fff; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(214,95,56,.45);
     font-size:22px; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .15s ease;}
   .flip-arrow:hover{background:var(--coral-d); transform:scale(1.06);}
@@ -98,6 +98,7 @@
   .flip-dots .dot{width:8px; height:8px; border-radius:50%; background:rgba(201,137,47,.4);}
   .flip-dots .dot.on{background:var(--coral);}
   .artifact-note{font:italic 400 12.5px/1.45 'Bitter'; color:var(--ink2); margin:10px auto 0; max-width:460px; text-align:center;}
+  .clue-text{font:italic 400 13.5px/1.5 'Bitter',serif; color:var(--ink2); margin:10px 0 0;}
 
   /* ---------- puzzle ---------- */
   .puzzle{margin-top:22px; border-top:1px dashed rgba(201,137,47,.6); padding-top:18px;}
@@ -153,6 +154,7 @@
   .landing .motto{font:italic 600 14px/1 'Cormorant Garamond',serif; color:var(--gold-d); letter-spacing:1px; margin:14px 0 22px;}
   .landing .blurb{font:400 15.5px/1.6 'Bitter',serif; color:var(--ink); max-width:560px; margin:0 auto 26px; text-align:left;}
   .landing .blurb p{margin:0 0 12px;}
+  .landing .credits{font:italic 400 12.5px/1.6 'Bitter',serif; color:var(--ink2); margin-top:26px; opacity:.85;}
 
   .done{text-align:center; padding:40px 30px;}
   .done .stamp{width:72px; height:72px; margin:0 auto 12px;}
@@ -165,7 +167,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar">
+  <div class="topbar" onclick="go(-1)" title="Back to the beginning">
     <img src="Door_Stamp.svg" alt="DoOR seal">
     <div class="dept">Department of Orderly Reincarnation</div>
     <div class="motto">Mors non finis</div>
@@ -197,7 +199,8 @@ const STATIONS = [
     pdf: "th_01.pdf",
     puzzle: {
       type: "text",
-      q: "Flip the leaflet. The back gives your destination on an old phone keypad (2=ABC, 3=DEF … a repeated digit = that many presses). Decode it and type where you're headed.",
+      q: "Flip the leaflet over and decode the message on the back — type where you're headed.",
+      clue: "Look at the numeric keyboard of your phone.",
       answer: ["HALLWAY OF MIRRORS"],
       placeholder: "type the next location",
       reveal: {
@@ -207,20 +210,38 @@ const STATIONS = [
     }
   },
 
-  /* ---- DEMO of the multiple-choice type. Replace with your real Station 2. ---- */
   {
     n: 2,
-    title: "Demo — multiple choice",
+    title: "The Interim Bulletin",
     intro: [],
-    pdf: "th_01.pdf",
+    pdf: "th_02a.pdf",
     puzzle: {
       type: "choice",
-      q: "Demo of the choose-an-option style. Which is the Department's motto?",
-      options: ["Ars longa, vita brevis", "Mors non finis", "Memento mori", "Ad astra per aspera"],
-      correct: 1,
+      q: "The bulletin points onward. Where do you look next?",
+      options: ["Check the printed program", "Go to The Inn Between", "Check the Effigy", "Go to the Museum of Emptiness"],
+      correct: 0,
       reveal: {
-        answer: "Mors non finis",
-        body: ["Placeholder — your real Station 2 goes here."]
+        answer: "Check the printed program",
+        body: ["The Notice of Temporal Filing says it plainly: the Department has lodged an entry of its own in the Program — though not where the living would think to look."]
+      }
+    }
+  },
+
+  {
+    n: 2,
+    part: 2,
+    title: "The Printed Program",
+    intro: [],
+    pdf: "th_02b.pdf",
+    puzzle: {
+      type: "text",
+      q: "The Department's entry sits past the last hour of the day. Find it, read it as the Department reads everything, and type what it hides.",
+      clue: "Nothing matters but the head of each line.",
+      answer: ["MANTIS"],
+      placeholder: "the hidden word",
+      reveal: {
+        answer: "MANTIS",
+        body: ["The 25:42h entry — Unlocking the DoOR — gives itself away: the first letter of each sentence spells M·A·N·T·I·S."]
       }
     }
   }
@@ -234,6 +255,7 @@ const progressRow = document.getElementById('progressRow');
 const progressFill = document.getElementById('progressFill');
 const progressLabel = document.getElementById('progressLabel');
 const TOTAL = STATIONS.length;
+const NSTATIONS = Math.max(...STATIONS.map(s=>s.n));
 let idx = -1;
 let solvedFlag = false;
 let selected = -1;
@@ -260,6 +282,7 @@ function renderLanding(){
         <p>A treasure hunt designed for Kiez Burn 2026</p>
       </div>
       <button class="btn btn-primary" style="font-size:16px;padding:14px 30px" onclick="go(0)">Begin Processing ▸</button>
+      <div class="credits">Brought to you by Indrek, Luz and Oud<br>compliments from the Romanesco Realm</div>
     </div>`;
 }
 
@@ -282,17 +305,18 @@ function renderStation(i){
 
   app.innerHTML = `
     <div class="card">
-      <div class="kicker">Station ${s.n} of ${TOTAL}</div>
-      <h2 class="station-title"><span class="n">${s.n}.</span> ${s.title.replace(/^Demo.*/,'Demo')}</h2>
+      <div class="kicker">Station ${s.n} of ${NSTATIONS}${s.part?' · part '+s.part:''}</div>
+      <h2 class="station-title"><span class="n">${s.n}.</span> ${s.title}</h2>
       <div class="narration">${introHTML}</div>
       ${clerkHTML}
 
       <div class="artifact-wrap">
-        <div class="artifact-label">The artifact</div>
         <div class="flipbook">
-          <div class="flip-stage" id="flipStage">
-            <div class="flip-loading" id="flipLoading">Retrieving document from the Archive…</div>
-            <canvas class="flip-canvas" id="flipCanvas" style="display:none"></canvas>
+          <div class="flip-stage-row">
+            <div class="flip-stage" id="flipStage">
+              <div class="flip-loading" id="flipLoading">Retrieving document from the Archive…</div>
+              <canvas class="flip-canvas" id="flipCanvas" style="display:none"></canvas>
+            </div>
             <button class="flip-arrow" id="flipArrow" style="display:none" title="Turn it over" onclick="flipPage()">↻</button>
           </div>
           <div class="flip-meta" id="flipMeta" style="display:none">
@@ -308,9 +332,11 @@ function renderStation(i){
         ${puzzleInput}
         <div class="btn-row">
           <button class="btn btn-primary" id="checkBtn" onclick="${s.puzzle.type==='text'?'checkText()':'checkChoice()'}">Check answer</button>
+          ${s.puzzle.clue ? `<button class="btn btn-ghost" id="clueBtn" onclick="showClue()">Clue</button>`:''}
           <button class="btn btn-ghost" onclick="revealAnswer()">Reveal answer</button>
           <span class="feedback" id="feedback"></span>
         </div>
+        ${s.puzzle.clue ? `<p class="clue-text" id="clueText" style="display:none">${s.puzzle.clue}</p>`:''}
         <div class="reveal" id="reveal">
           <div class="rk">The way onward</div>
           <div class="ans">${s.puzzle.reveal.answer}</div>
@@ -321,7 +347,7 @@ function renderStation(i){
       ${s.outro ? `<div class="narration" id="outro" style="margin-top:16px;color:var(--ink2);font-style:italic;display:none">${s.outro}</div>`:''}
 
       <div class="nav-row">
-        <button class="btn btn-ghost" onclick="go(${i-1})" ${i===0?'style="visibility:hidden"':''}>◂ Back</button>
+        <button class="btn btn-ghost" onclick="go(${i-1})">${i===0?'◂ Beginning':'◂ Back'}</button>
         <button class="btn btn-primary" id="nextBtn" onclick="go(${i+1})" disabled>${i+1>=TOTAL?'Finish ▸':'Next station ▸'}</button>
       </div>
     </div>`;
@@ -405,6 +431,10 @@ window.checkChoice = function(){
   const choices = document.querySelectorAll('.choice');
   if(selected === s.puzzle.correct){ choices[selected].classList.add('correct'); fb.className='feedback ok'; fb.textContent='Correct.'; solve(); }
   else { choices[selected].classList.add('wrong'); fb.className='feedback no'; fb.textContent='Not that one. Try again, or reveal the answer.'; }
+};
+window.showClue = function(){
+  const t = document.getElementById('clueText'); if(t) t.style.display='block';
+  const b = document.getElementById('clueBtn'); if(b) b.style.display='none';
 };
 window.revealAnswer = function(){
   const s = STATIONS[idx];
